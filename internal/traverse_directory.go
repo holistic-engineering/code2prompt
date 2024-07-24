@@ -26,42 +26,42 @@ func TraverseDirectory(root string, additionalExcludes []string) ([]FileInfo, er
 	}
 
 	defaultExcludes := []string{
-		"node_modules/**",
-		"vendor/**",
-		"build/**",
-		"dist/**",
-		"*.exe",
-		"*.dll",
-		"*.so",
-		"*.dylib",
-		"*.class",
-		"*.jar",
-		"*.war",
-		"*.ear",
-		"*.zip",
-		"*.tar.gz",
-		"*.rar",
-		"*.log",
-		".git/**",
-		".svn/**",
-		".hg/**",
-		"*.pdf",
-		"*.png",
-		"*.jpg",
-		"*.jpeg",
-		"*.gif",
-		"*.bmp",
-		"*.tiff",
-		"*.ico",
-		"*.svg",
-		"*.webp",
-		"*.min.js",
-		"*.min.css",
-		"*.lock",
-		"*test*/**",        // Exclude directories with 'test' in the name
-		"**/*test*.{js,py,go,java,cs,ts,cpp,c,rb}", // Exclude test files with common extensions
-		"**/*spec*.{js,ts}", // Exclude spec files (common in JavaScript/TypeScript projects)
-		"**/__tests__/**",   // Exclude __tests__ directories (common in React projects)
+		"**/node_modules/**",
+		"**/vendor/**",
+		"**/build/**",
+		"**/dist/**",
+		"**/*.exe",
+		"**/*.dll",
+		"**/*.so",
+		"**/*.dylib",
+		"**/*.class",
+		"**/*.jar",
+		"**/*.war",
+		"**/*.ear",
+		"**/*.zip",
+		"**/*.tar.gz",
+		"**/*.rar",
+		"**/*.log",
+		"**/.git/**",
+		"**/.svn/**",
+		"**/.hg/**",
+		"**/*.pdf",
+		"**/*.png",
+		"**/*.jpg",
+		"**/*.jpeg",
+		"**/*.gif",
+		"**/*.bmp",
+		"**/*.tiff",
+		"**/*.ico",
+		"**/*.svg",
+		"**/*.webp",
+		"**/*.min.js",
+		"**/*.min.css",
+		"**/*.lock",
+		"**/*test*/**",
+		"**/*test*.{js,py,go,java,cs,ts,cpp,c,rb}",
+		"**/*spec*.{js,ts}",
+		"**/__tests__/**",
 	}
 
 	excludePatterns := append(gitignorePatterns, defaultExcludes...)
@@ -72,13 +72,16 @@ func TraverseDirectory(root string, additionalExcludes []string) ([]FileInfo, er
 			return err
 		}
 
-		if info.IsDir() {
-			return nil
-		}
-
 		relPath, err := filepath.Rel(root, path)
 		if err != nil {
 			return err
+		}
+
+		if info.IsDir() {
+			if shouldExclude(relPath, excludePatterns) {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if !shouldExclude(relPath, excludePatterns) {
@@ -118,7 +121,7 @@ func readGitignore(root string) ([]string, error) {
 	for scanner.Scan() {
 		pattern := strings.TrimSpace(scanner.Text())
 		if pattern != "" && !strings.HasPrefix(pattern, "#") {
-			patterns = append(patterns, pattern)
+			patterns = append(patterns, "**/" + pattern)
 		}
 	}
 
