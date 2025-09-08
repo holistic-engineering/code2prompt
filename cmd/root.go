@@ -21,8 +21,10 @@ var rootCmd = &cobra.Command{
 		jsonOutput, _ := cmd.Flags().GetBool("json")
 		tokens, _ := cmd.Flags().GetBool("tokens")
 		encoding, _ := cmd.Flags().GetString("encoding")
+		maxFilesPerDir, _ := cmd.Flags().GetInt("max-files-per-dir")
+		noSample, _ := cmd.Flags().GetBool("no-sample")
 
-		files, err := internal.TraverseDirectory(path, exclude)
+		files, err := internal.TraverseDirectory(path, exclude, maxFilesPerDir, noSample)
 		if err != nil {
 			fmt.Println("Error traversing directory:", err)
 			os.Exit(1)
@@ -54,7 +56,7 @@ var rootCmd = &cobra.Command{
 			if tokens {
 				outMap["token_count"] = tokenCount
 			}
-			
+
 			jsonData, _ := json.MarshalIndent(outMap, "", "  ")
 			output = string(jsonData)
 		}
@@ -85,4 +87,6 @@ func init() {
 	rootCmd.Flags().Bool("json", false, "Output as JSON")
 	rootCmd.Flags().Bool("tokens", false, "Count tokens in resulting prompt")
 	rootCmd.Flags().String("encoding", "cl100k_base", "Tokenizer encoding to use")
+	rootCmd.Flags().IntP("max-files-per-dir", "m", 5, "Maximum number of files to include per directory")
+	rootCmd.Flags().Bool("no-sample", false, "Include all files without sampling (overrides max-files-per-dir)")
 }

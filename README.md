@@ -6,6 +6,7 @@ Code2Prompt is a powerful command-line tool that converts your entire codebase i
 
 - **Codebase Traversal**: Automatically walks through your project directory, respecting .gitignore rules.
 - **Source Tree Generation**: Creates a hierarchical representation of your project structure.
+- **Smart File Sampling**: Configurable file sampling per directory to manage large codebases efficiently.
 - **Prompt Templating**: Customizable prompt generation using Handlebars templates.
 - **Token Counting**: Calculates the token count of the generated prompt for compatibility with various LLM token limits.
 - **Multiple Output Formats**: Supports plain text and JSON output.
@@ -48,6 +49,8 @@ code2prompt [flags] <path>
 - `--tokens`: Count tokens in the generated prompt
 - `--json`: Output as JSON
 - `--encoding`: Tokenizer encoding to use (default "cl100k_base")
+- `-m, --max-files-per-dir`: Maximum number of files to include per directory (default 5)
+- `--no-sample`: Include all files without sampling (overrides max-files-per-dir)
 
 ### Examples
 
@@ -70,6 +73,36 @@ code2prompt [flags] <path>
    ```
    code2prompt --json --tokens /path/to/your/project
    ```
+
+5. Include all files without sampling:
+   ```
+   code2prompt --no-sample /path/to/your/project
+   ```
+
+6. Set a higher file limit per directory:
+   ```
+   code2prompt --max-files-per-dir 10 /path/to/your/project
+   ```
+
+7. Combine multiple options:
+   ```
+   code2prompt --no-sample --exclude "*.log,*.tmp" --json /path/to/your/project
+   ```
+
+### File Sampling
+
+By default, Code2Prompt limits the number of files included per directory to 5 to keep the output manageable for large codebases. Files are selected alphabetically (deterministic) when the limit is exceeded.
+
+**Key behaviors:**
+- **Default limit**: 5 files per directory
+- **Selection method**: Alphabetical sorting (ensures consistent results)
+- **Customization**: Use `--max-files-per-dir` to change the limit
+- **Disable sampling**: Use `--no-sample` to include all files
+
+**When to use each option:**
+- **Default behavior**: Good for exploring large codebases
+- **`--max-files-per-dir N`**: When you need more context but still want limits
+- **`--no-sample`**: When you need complete codebase coverage (recommended for smaller projects or when specific files are being excluded)
 
 ### Custom Templates
 

@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
-	"math/rand"
 
 	"github.com/gobwas/glob"
 )
@@ -15,11 +15,11 @@ type FileInfo struct {
 	Content string
 }
 
-const MaxFilesPerDirectory = 5
+// Removed MaxFilesPerDirectory constant - now configurable via command line flags
 
-func TraverseDirectory(root string, additionalExcludes []string) ([]FileInfo, error) {
+func TraverseDirectory(root string, additionalExcludes []string, maxFilesPerDir int, noSample bool) ([]FileInfo, error) {
 	var files []FileInfo
-	
+
 	gitignorePatterns, err := readGitignore(root)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,10 @@ func TraverseDirectory(root string, additionalExcludes []string) ([]FileInfo, er
 		return nil, err
 	}
 
-	return SampleFiles(files), nil
+	if noSample {
+		return files, nil
+	}
+	return SampleFiles(files, maxFilesPerDir), nil
 }
 
 func readGitignore(root string) ([]string, error) {
@@ -121,7 +124,7 @@ func readGitignore(root string) ([]string, error) {
 	for scanner.Scan() {
 		pattern := strings.TrimSpace(scanner.Text())
 		if pattern != "" && !strings.HasPrefix(pattern, "#") {
-			patterns = append(patterns, "**" + pattern)
+			patterns = append(patterns, "**"+pattern)
 		}
 	}
 
@@ -141,9 +144,9 @@ func shouldExclude(path string, patterns []string) bool {
 	return false
 }
 
-func SampleFiles(files []FileInfo) []FileInfo {
+func SampleFiles(files []FileInfo, maxFilesPerDir int) []FileInfo {
 	filesByDir := make(map[string][]FileInfo)
-	
+
 	for _, file := range files {
 		dir := filepath.Dir(file.Path)
 		filesByDir[dir] = append(filesByDir[dir], file)
@@ -151,11 +154,12 @@ func SampleFiles(files []FileInfo) []FileInfo {
 
 	var sampledFiles []FileInfo
 	for _, dirFiles := range filesByDir {
-		if len(dirFiles) > MaxFilesPerDirectory {
-			rand.Shuffle(len(dirFiles), func(i, j int) {
-				dirFiles[i], dirFiles[j] = dirFiles[j], dirFiles[i]
+		if len(dirFiles) > maxFilesPerDir {
+			// Sort files to ensure deterministic behavior instead of random sampling
+			sort.Slice(dirFiles, func(i, j int) bool {
+				return dirFiles[i].Path < dirFiles[j].Path
 			})
-			dirFiles = dirFiles[:MaxFilesPerDirectory]
+			dirFiles = dirFiles[:maxFilesPerDir]
 		}
 		sampledFiles = append(sampledFiles, dirFiles...)
 	}
