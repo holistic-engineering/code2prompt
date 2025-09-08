@@ -104,6 +104,33 @@ By default, Code2Prompt limits the number of files included per directory to 5 t
 - **`--max-files-per-dir N`**: When you need more context but still want limits
 - **`--no-sample`**: When you need complete codebase coverage (recommended for smaller projects or when specific files are being excluded)
 
+### Exclude Patterns
+
+The `--exclude` flag supports glob patterns for flexible file filtering. **Important**: Always quote patterns containing wildcards to prevent shell expansion.
+
+**Pattern Examples:**
+```bash
+# ✅ Correct: Quoted patterns
+code2prompt --exclude '*.log' /path/to/project
+code2prompt --exclude '.godot/editor/*' /path/to/project
+code2prompt --exclude '.godot/editor/' /path/to/project
+
+# ❌ Incorrect: Unquoted wildcards (causes shell expansion errors)
+code2prompt --exclude *.log /path/to/project  # Error: shell expands before tool sees it
+code2prompt --exclude .godot/editor/* /path/to/project  # Error: "accepts 1 arg(s), received N"
+```
+
+**Pattern Types:**
+- **File extensions**: `'*.log'`, `'*.tmp'`, `'*.bin'`
+- **Directory contents**: `'.godot/editor/*'` (all files in directory)
+- **Entire directories**: `'.godot/editor/'` (directory and all contents)
+- **Nested patterns**: `'**/.godot/**'` (all .godot directories anywhere)
+
+**Multiple patterns:**
+```bash
+code2prompt --exclude '*.log' --exclude '.godot/editor/*' --exclude 'build/' /path/to/project
+```
+
 ### Custom Templates
 
 You can create custom templates for the prompt using the [HandlebarsJS](https://handlebarsjs.com/) templating engine. The following list shows all available variables and helper functions. 

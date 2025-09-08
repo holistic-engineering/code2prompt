@@ -65,7 +65,12 @@ func TraverseDirectory(root string, additionalExcludes []string, maxFilesPerDir 
 	}
 
 	excludePatterns := append(gitignorePatterns, defaultExcludes...)
-	excludePatterns = append(excludePatterns, additionalExcludes...)
+
+	// Normalize user-provided patterns to work with glob library
+	for _, pattern := range additionalExcludes {
+		normalizedPattern := normalizePattern(pattern)
+		excludePatterns = append(excludePatterns, normalizedPattern)
+	}
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -129,6 +134,29 @@ func readGitignore(root string) ([]string, error) {
 	}
 
 	return patterns, scanner.Err()
+}
+
+// normalizePattern converts user-friendly patterns to glob patterns
+func normalizePattern(pattern string) string {
+	// Remove leading "./" if present
+	pattern = strings.TrimPrefix(pattern, "./")
+
+	// If pattern doesn't start with "**", add it for proper matching
+	if !strings.HasPrefix(pattern, "**") && !strings.HasPrefix(pattern, "*") {
+		pattern = "**" + pattern
+	}
+
+	// If pattern ends with "/" it's a directory pattern, add "**" to match all contents
+	if strings.HasSuffix(pattern, "/") {
+		pattern = pattern + "**"
+	}
+
+	// If pattern ends with "/*" convert to directory pattern
+	if strings.HasSuffix(pattern, "/*") {
+		pattern = strings.TrimSuffix(pattern, "/*") + "/**"
+	}
+
+	return pattern
 }
 
 func shouldExclude(path string, patterns []string) bool {
